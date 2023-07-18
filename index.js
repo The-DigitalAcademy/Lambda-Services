@@ -45,10 +45,11 @@ server.post("/", bodyParser.json(), async (req, res) => {
   //   await sendEmail(event);
   if (result.status === 201) {
     await updateQueue(req.body, "Created");
+    await updateDev(req.body.Records[0].body.id, true);
   } else {
     await updateQueue(req.body, "Error");
   }
-  return res.status(result.status).json(result.message);
+  return res.status(result.status).json({ message: result.message });
 });
 
 // Perpetual Server Listener
@@ -69,7 +70,7 @@ const handler = async (event) => {
   }
   return await createMicroApp(
     event.Records[0].body,
-    event.Records[0].messageId
+    event.Records[0].messageID
   );
 };
 
@@ -225,28 +226,30 @@ const updateCreateTemplate = (
     icon_id.data.data.id;
 
   // Populate the Creation Template with Permissions
-  createTemplate.data.attributes.field_user_permissions = [...(new Set(
-    permissions.data.data[0].attributes.permissions.permissions
-      .filter((permission) => body.Body.data[permission.name])
-      .map((obj) =>
-        obj.name === "language" ||
-        obj.name === "profile" ||
-        obj.name === "presence"
-          ? "User" +
-            obj.name.slice(0, 1).toUpperCase() +
-            obj.name.split(" ").join("").slice(1)
-          : obj.name === "message"
-          ? "Send" +
-            obj.name.slice(0, 1).toUpperCase() +
-            obj.name.split(" ").join("").slice(1)
-          : obj.name === "msisdn"
-          ? obj.name.toUpperCase()
-          : obj.name === "ozow" || obj.name === "momo"
-          ? "MoMoCollections"
-          : obj.name.slice(0, 1).toUpperCase() +
-            obj.name.split(" ").join("").slice(1)
-      )
-  ))];
+  createTemplate.data.attributes.field_user_permissions = [
+    ...new Set(
+      permissions.data.data[0].attributes.permissions.permissions
+        .filter((permission) => body.Body.data[permission.name])
+        .map((obj) =>
+          obj.name === "language" ||
+          obj.name === "profile" ||
+          obj.name === "presence"
+            ? "User" +
+              obj.name.slice(0, 1).toUpperCase() +
+              obj.name.split(" ").join("").slice(1)
+            : obj.name === "message"
+            ? "Send" +
+              obj.name.slice(0, 1).toUpperCase() +
+              obj.name.split(" ").join("").slice(1)
+            : obj.name === "msisdn"
+            ? obj.name.toUpperCase()
+            : obj.name === "ozow" || obj.name === "momo"
+            ? "MoMoCollections"
+            : obj.name.slice(0, 1).toUpperCase() +
+              obj.name.split(" ").join("").slice(1)
+        )
+    ),
+  ];
 
   createTemplate.data.relationships.field_languages_term.data =
     languageIDS.data.data
@@ -261,24 +264,36 @@ const updateCreateTemplate = (
       });
 
   // Populate Creation Template with Category Data
-  createTemplate.data.relationships.field_category.data = categoryIDS.data.data
-    .filter((category) =>
-      JSON.parse(body.Body.data.category).includes(category.attributes.name)
-    )
-    .map((category) => {
-      return { type: category.type, id: category.id };
-    });
+  createTemplate.data.relationships.field_category.data.push(
+    ...categoryIDS.data.data
+      .filter((category) =>
+        JSON.parse(body.Body.data.category).includes(category.attributes.name)
+      )
+      .map((category) => {
+        return { type: category.type, id: category.id };
+      })
+  );
 
   // Populate Creation Template with Countries
   createTemplate.data.relationships.field_countries_term.data =
     countryIDS.data.data
       .filter((country) =>
-        body.Body.data.countries
-          .map((countryName) =>
-            JSON.parse(countryName.name.split(" ").join(""))
-          )
-          .flat()
-          .includes(country.attributes.name.split(" ").join(""))
+        body.Body.data.momo
+          ? Object.keys(body.Body.data.MomoCountries)
+              .sort()
+              .filter((e, i) => i === 0)
+              .map((country, index) =>
+                country === "congobrazzaville"
+                  ? "Congo (Brazzaville)"
+                  : country.slice(0, 1).toUpperCase() + country.slice(1)
+              )
+              .includes(country.attributes.name.split(" ").join(""))
+          : body.Body.data.countries
+              .map((countryName) =>
+                JSON.parse(countryName.name.split(" ").join(""))
+              )
+              .flat()
+              .includes(country.attributes.name.split(" ").join(""))
       )
       .map((country) => {
         return { type: country.type, id: country.id };
@@ -289,9 +304,21 @@ const updateCreateTemplate = (
   // Populating the Creation Template with Payments - MOMO
   console.log("Updating MoMo Payment...");
   createTemplate.data.attributes.field_momo = body.Body.data.momo;
-  createTemplate.data.attributes.field_momo_phone = JSON.stringify(
-    Object.values(body.Body.data.MomoCountries)
-  );
+  createTemplate.data.attributes.field_adv_momo_phone = Object.keys(
+    body.Body.data.MomoCountries
+  )
+    .sort()
+    .filter((e, i) => i === 0)
+    .map((country, index) => {
+      return {
+        country:
+          country === "congobrazzaville"
+            ? "Congo (Brazzaville)"
+            : country.slice(0, 1).toUpperCase() + country.slice(1),
+        calling_code: body.Body.data.MomoCountries[country].slice(0, 4),
+        phone: body.Body.data.MomoCountries[country].slice(4),
+      };
+    });
 
   // Populating the Creation Template with Payments - OZOW
   console.log("Updating OZOW Payment...");
@@ -303,7 +330,7 @@ const updateCreateTemplate = (
 
 const updateQueue = async (body, status) => {
   if (body.hasOwnProperty("QueueID")) {
-    let temp = await axios.put(
+    await axios.put(
       "https://devstrapi.thedigitalacademy.co.za/api/voc-automation-messagelogs/" +
         body.QueueID.data.id,
       {
@@ -313,4 +340,20 @@ const updateQueue = async (body, status) => {
       }
     );
   }
+};
+
+const updateDev = async (microappID, data) => {
+  const microAppReqID = await axios.get(
+    "https://devstrapi.thedigitalacademy.co.za/api/publish-micro-apps?filters[microAppId][$eq]=" +
+      microappID
+  );
+  await axios.put(
+    "https://devstrapi.thedigitalacademy.co.za/api/publish-micro-apps/" +
+      microAppReqID.data.data[0].id,
+    {
+      data: {
+        dev: data,
+      },
+    }
+  );
 };

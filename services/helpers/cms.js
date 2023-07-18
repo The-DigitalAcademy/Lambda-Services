@@ -128,7 +128,7 @@ const createCMS = async (createTemplate, messageID, instance) => {
     console.log(JSON.stringify("Successfully Created Micro App - DevCMS"));
     return {
       status: 201,
-      message: "Created Micro App MessageId: " + messageID,
+      message: "Successfully Created MicroAppID: " + res.data.data.id + " ========= MessageId: " + messageID,
     };
   } catch (error) {
     console.log(JSON.stringify("Couldn't Creat Micro App - DevCMS"));
