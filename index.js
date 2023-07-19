@@ -47,6 +47,7 @@ server.post("/", bodyParser.json(), async (req, res) => {
     await updateQueue(req.body, "Created");
     await updateDev(req.body.Records[0].body.id, true);
   } else {
+    console.log("Error Creating MicroApp - Error: " + result.message)
     await updateQueue(req.body, "Error");
   }
   return res.status(result.status).json({ message: result.message });
@@ -264,7 +265,10 @@ const updateCreateTemplate = (
       });
 
   // Populate Creation Template with Category Data
-  createTemplate.data.relationships.field_category.data.push(
+  createTemplate.data.relationships.field_category.data = [{
+    "type": "taxonomy_term--category",
+    "id": "7f26b86b-6c0d-463b-aaee-b343406c90f6"
+  },
     ...categoryIDS.data.data
       .filter((category) =>
         JSON.parse(body.Body.data.category).includes(category.attributes.name)
@@ -272,7 +276,7 @@ const updateCreateTemplate = (
       .map((category) => {
         return { type: category.type, id: category.id };
       })
-  );
+    ];
 
   // Populate Creation Template with Countries
   createTemplate.data.relationships.field_countries_term.data =
@@ -329,6 +333,7 @@ const updateCreateTemplate = (
 };
 
 const updateQueue = async (body, status) => {
+  console.log("Updating QueueID: " + body.QueueID?.data.id)
   if (body.hasOwnProperty("QueueID")) {
     await axios.put(
       "https://devstrapi.thedigitalacademy.co.za/api/voc-automation-messagelogs/" +

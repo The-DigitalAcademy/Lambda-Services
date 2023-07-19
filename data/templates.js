@@ -51,10 +51,7 @@ const createTemplate = {
         data: [],
       },
       field_category: {
-        data: [{
-          "type": "taxonomy_term--category",
-          "id": "7f26b86b-6c0d-463b-aaee-b343406c90f6"
-        }],
+        data: [],
       },
       field_countries_term: {
         data: [],
