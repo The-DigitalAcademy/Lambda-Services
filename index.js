@@ -26,7 +26,12 @@ server.post("/", bodyParser.json(), async (req, res) => {
   await updateQueue(req.body, "In Progress");
   // Authenticate
   if (process.env.APIKEY !== req.headers["x-api-key"]) {
-    await updateQueue(req.body, "Error");
+    console.log("Not Authorized to Access This Endpoint");
+    await updateQueue(
+      req.body,
+      "Error",
+      "Not Authorized to Access This Endpoint"
+    );
     return res
       .status(403)
       .json({ message: "Not Authorized to Access This Endpoint" });
@@ -38,7 +43,8 @@ server.post("/", bodyParser.json(), async (req, res) => {
     !req.body.Records[0].hasOwnProperty("body") ||
     !req.body.Records[0].hasOwnProperty("messageID")
   ) {
-    await updateQueue(req.body, "Error");
+    console.log("Invalid request body");
+    await updateQueue(req.body, "Error", "Invalid request body");
     return res.status(400).json({ message: "Invalid request body" });
   }
   const result = await handler(req.body);
@@ -47,14 +53,11 @@ server.post("/", bodyParser.json(), async (req, res) => {
     await updateQueue(req.body, "Created");
     await updateDev(req.body.Records[0].body.id, true);
   } else {
-    console.log("Error Creating MicroApp - Error: " + result.message)
-    await updateQueue(req.body, "Error");
+    console.log("Error Creating MicroApp - Error: " + result.message);
+    await updateQueue(req.body, "Error", result.message);
   }
   return res.status(result.status).json({ message: result.message });
 });
-
-// Perpetual Server Listener
-server.listen(3030, () => console.log("Listing to port 3030"));
 
 const handler = async (event) => {
   // Program Starts
@@ -67,6 +70,7 @@ const handler = async (event) => {
     !event.Records[0].body.Icon.hasOwnProperty("Image") ||
     event.Records[0].body.Icon.Image.length < 1
   ) {
+    console.log("No Image or Icon to Upload");
     return { status: 500, message: "No Image or Icon to Upload" };
   }
   return await createMicroApp(
@@ -74,48 +78,6 @@ const handler = async (event) => {
     event.Records[0].messageID
   );
 };
-
-async function sendEmail(event) {
-  const nodemailer = require("nodemailer");
-  const smtpTransport = require("nodemailer-smtp-transport");
-
-  const transporter = nodemailer.createTransport(
-    smtpTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.sesAccessKey,
-        pass: process.env.sesSecretKey,
-      },
-    })
-  );
-
-  const text = JSON.stringify(event.Records[0]);
-
-  const mailOptions = {
-    from: "delali@thedigitalacademy.co.za",
-    to: "dfunani@gmail.com",
-    bcc: "delali@thedigitalacademy.co.za",
-    subject: "Test subject",
-    text: text,
-  };
-  console.log(process.env.sesAccessKey);
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      const response = {
-        statusCode: 500,
-        body: JSON.stringify({
-          error: error.message,
-        }),
-      };
-    }
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: text,
-      }),
-    };
-  });
-}
 
 async function createMicroApp(body, messageID) {
   // Create a new cookie jar
@@ -199,7 +161,7 @@ async function createMicroApp(body, messageID) {
   );
 
   // Create MicroApp on DevCMS
-  console.log(JSON.stringify("Creating Micro App - DevCMS"));
+  console.log("Creating Micro App - DevCMS");
   return await createCMS(createTemplate, messageID, instance);
 }
 
@@ -265,18 +227,19 @@ const updateCreateTemplate = (
       });
 
   // Populate Creation Template with Category Data
-  createTemplate.data.relationships.field_category.data = [{
-    "type": "taxonomy_term--category",
-    "id": "7f26b86b-6c0d-463b-aaee-b343406c90f6"
-  },
+  createTemplate.data.relationships.field_category.data = [
+    {
+      type: "taxonomy_term--category",
+      id: "7f26b86b-6c0d-463b-aaee-b343406c90f6",
+    },
     ...categoryIDS.data.data
       .filter((category) =>
         JSON.parse(body.Body.data.category).includes(category.attributes.name)
       )
       .map((category) => {
         return { type: category.type, id: category.id };
-      })
-    ];
+      }),
+  ];
 
   // Populate Creation Template with Countries
   createTemplate.data.relationships.field_countries_term.data =
@@ -332,8 +295,8 @@ const updateCreateTemplate = (
   createTemplate.data.attributes.field_domains = body.Body.data.domains;
 };
 
-const updateQueue = async (body, status) => {
-  console.log("Updating QueueID: " + body.QueueID?.data.id)
+const updateQueue = async (body, status, error = "") => {
+  console.log("Updating QueueID: " + body.QueueID?.data.id);
   if (body.hasOwnProperty("QueueID")) {
     await axios.put(
       "https://devstrapi.thedigitalacademy.co.za/api/voc-automation-messagelogs/" +
@@ -341,6 +304,7 @@ const updateQueue = async (body, status) => {
       {
         data: {
           status: status,
+          statusMessage: error,
         },
       }
     );
@@ -348,6 +312,7 @@ const updateQueue = async (body, status) => {
 };
 
 const updateDev = async (microappID, data) => {
+  console.log("Updating DevStrapi...");
   const microAppReqID = await axios.get(
     "https://devstrapi.thedigitalacademy.co.za/api/publish-micro-apps?filters[microAppId][$eq]=" +
       microappID
@@ -361,4 +326,8 @@ const updateDev = async (microappID, data) => {
       },
     }
   );
+  console.log("Updated DevStrapi Successfully");
 };
+
+// Perpetual Server Listener
+server.listen(3030, () => console.log("Listing to port 3030"));

@@ -1,10 +1,18 @@
 const axios = require("axios");
+require("dotenv").config();
+
+// Credentials Manager
+const credentials = {
+  username: process.env.CMS_USERNAME,
+  password: process.env.CMS_PASSWORD,
+}
 
 const fetchIcon = async (body) => {
   try {
     let icon = await axios.get(body.Icon.Image[0].formats.thumbnail.url, {
       responseType: "arraybuffer", // Set the response type as arraybuffer to handle binary data
     });
+    console.log("Icon Fetched Successfully");
     return icon;
   } catch (error) {
     console.log("Error: ", error);
@@ -15,9 +23,10 @@ const fetchIcon = async (body) => {
 const authenticate = async (instance) => {
   try {
     let res = await instance.get("http://devcms.ayoba.me/session/token");
+    console.log("Authenticated Successfully");
     return res;
   } catch (err) {
-    console.log("Error: ", error);
+    console.log("Error: ", err);
     return null;
   }
 };
@@ -32,10 +41,7 @@ const uploadImage = async (imageBlob, body, instance) => {
           "Content-Type": `application/octet-stream`,
           "Content-Disposition": `file; filename="${body.Icon.Image[0].formats.thumbnail.hash}${body.Icon.Image[0].formats.thumbnail.ext}"`,
         },
-        auth: {
-          username: "DA.Dylan",
-          password: "DA.Dylan123",
-        },
+        auth: credentials,
       }
     );
     console.log("Uploaded Icon: " + image_upload.data.data.id);
@@ -52,10 +58,7 @@ const getIconID = async (iconUploadTemplate, instance) => {
       "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/media/icon",
       iconUploadTemplate,
       {
-        auth: {
-          username: "DA.Dylan",
-          password: "DA.Dylan123",
-        },
+        auth: credentials,
       }
     );
     console.log("Confirmed Icon: " + icon_id.data.data.id);
@@ -71,6 +74,7 @@ const getPermissions = async () => {
     let permissions = await axios.get(
       "https://devstrapi.thedigitalacademy.co.za/api/micro-app-permissions"
     );
+    console.log("Permissions Fetched Successfully");
     return permissions;
   } catch (error) {
     console.log("Error: ", error);
@@ -83,8 +87,10 @@ const getLanguages = async (instance) => {
     let languageIDS = await instance.get(
       "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/taxonomy_term/languages"
     );
+    console.log("Languages Fetched Successfully");
     return languageIDS;
   } catch (error) {
+    console.log("Error: ", error);
     return null;
   }
 };
@@ -94,6 +100,7 @@ const getCountries = async (instance) => {
     let countryIDS = await instance.get(
       "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/taxonomy_term/countries"
     );
+    console.log("Countries Fetched Successfully");
     return countryIDS;
   } catch (error) {
     console.log("Error: ", error);
@@ -106,6 +113,7 @@ const getCategory = async (instance) => {
     let categoryIDS = await instance.get(
       "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/taxonomy_term/category"
     );
+    console.log("Categories Fetched Successfully");
     return categoryIDS;
   } catch (error) {
     console.log("Error: ", error);
@@ -119,19 +127,16 @@ const createCMS = async (createTemplate, messageID, instance) => {
       "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/node/microapp",
       createTemplate,
       {
-        auth: {
-          username: "DA.Dylan",
-          password: "DA.Dylan123",
-        },
+        auth: credentials,
       }
     );
-    console.log(JSON.stringify("Successfully Created Micro App - DevCMS"));
+    console.log("Successfully Created Micro App - DevCMS");
     return {
       status: 201,
       message: "Successfully Created MicroAppID: " + res.data.data.id + " ========= MessageId: " + messageID,
     };
   } catch (error) {
-    console.log(JSON.stringify("Couldn't Creat Micro App - DevCMS"));
+    console.log("Couldn't Create Micro App - DevCMS");
     console.log("Error: ", error);
     return { status: 500, message: error };
   }
@@ -146,4 +151,5 @@ module.exports = {
   getCountries,
   getCategory,
   createCMS,
+  credentials
 };
