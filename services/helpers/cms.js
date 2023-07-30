@@ -141,6 +141,7 @@ const createCMS = async (createTemplate, messageID, instance) => {
     return { status: 500, message: error };
   }
 };
+
 module.exports = {
   fetchIcon,
   authenticate,

@@ -17,10 +17,14 @@ const {
   createCMS,
 } = require("./services/helpers/cms.js");
 const { iconUploadTemplate, createTemplate } = require("./data/templates.js");
+const path = require("path");
 
 // Instance of an express Node Server
 const server = express();
 
+server.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname + "/index.html"))
+})
 // Creates A REST API Endpoint
 server.post("/", bodyParser.json(), async (req, res) => {
   await updateQueue(req.body, "In Progress");
@@ -298,6 +302,7 @@ const updateCreateTemplate = (
 const updateQueue = async (body, status, error = "") => {
   console.log("Updating QueueID: " + body.QueueID?.data.id);
   if (body.hasOwnProperty("QueueID")) {
+    try{
     await axios.put(
       "https://devstrapi.thedigitalacademy.co.za/api/voc-automation-messagelogs/" +
         body.QueueID.data.id,
@@ -308,10 +313,15 @@ const updateQueue = async (body, status, error = "") => {
         },
       }
     );
+    }
+    catch(err){
+      console.log(err)
+    }
   }
 };
 
 const updateDev = async (microappID, data) => {
+  try{
   console.log("Updating DevStrapi...");
   const microAppReqID = await axios.get(
     "https://devstrapi.thedigitalacademy.co.za/api/publish-micro-apps?filters[microAppId][$eq]=" +
@@ -326,8 +336,11 @@ const updateDev = async (microappID, data) => {
       },
     }
   );
-  console.log("Updated DevStrapi Successfully");
+  console.log("Updated DevStrapi Successfully");}
+  catch(err){
+    console.log(err)
+  }
 };
 
 // Perpetual Server Listener
-server.listen(3030, () => console.log("Listing to port 3030"));
+server.listen(process.env.PORT, () => console.log("Listing to port 3030"));
