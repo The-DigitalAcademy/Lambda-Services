@@ -1,11 +1,11 @@
 const axios = require("axios");
 require("dotenv").config();
+const {credentials} = require("./auth-config")
 
-// Credentials Manager
-const credentials = {
-  username: process.env.CMS_USERNAME,
-  password: process.env.CMS_PASSWORD,
-}
+const STRAPI_URL = process.env.STRAPI_URL ?? "https://devstrapi.thedigitalacademy.co.za" // Defaults to DevStrapi
+const DEV_CMS = process.env.DEV_CMS ?? "http://devcms.ayoba.me" // Defaults to DEV CMS
+const PROD_CMS = process.env.PROD_CMS ?? "http://devcms.ayoba.me"
+const CMS_ID = process.env.CMS_ID ?? "/jsonapi/15c1ad2ea0d3"
 
 const fetchIcon = async (body) => {
   try {
@@ -22,7 +22,7 @@ const fetchIcon = async (body) => {
 
 const authenticate = async (instance) => {
   try {
-    let res = await instance.get("http://devcms.ayoba.me/session/token");
+    let res = await instance.get(DEV_CMS + "/session/token");
     console.log("Authenticated Successfully");
     return res;
   } catch (err) {
@@ -34,7 +34,7 @@ const authenticate = async (instance) => {
 const uploadImage = async (imageBlob, body, instance) => {
   try {
     let image_upload = await instance.post(
-      "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/media/icon/field_media_image",
+      DEV_CMS + CMS_ID + "/media/icon/field_media_image",
       imageBlob,
       {
         headers: {
@@ -55,7 +55,7 @@ const uploadImage = async (imageBlob, body, instance) => {
 const getIconID = async (iconUploadTemplate, instance) => {
   try {
     let icon_id = await instance.post(
-      "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/media/icon",
+      DEV_CMS + CMS_ID + "/media/icon",
       iconUploadTemplate,
       {
         auth: credentials,
@@ -72,7 +72,7 @@ const getIconID = async (iconUploadTemplate, instance) => {
 const getPermissions = async () => {
   try {
     let permissions = await axios.get(
-      "https://devstrapi.thedigitalacademy.co.za/api/micro-app-permissions"
+      STRAPI_URL + "/api/micro-app-permissions"
     );
     console.log("Permissions Fetched Successfully");
     return permissions;
@@ -85,7 +85,7 @@ const getPermissions = async () => {
 const getLanguages = async (instance) => {
   try {
     let languageIDS = await instance.get(
-      "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/taxonomy_term/languages"
+      DEV_CMS + CMS_ID + "/taxonomy_term/languages"
     );
     console.log("Languages Fetched Successfully");
     return languageIDS;
@@ -98,7 +98,7 @@ const getLanguages = async (instance) => {
 const getCountries = async (instance) => {
   try {
     let countryIDS = await instance.get(
-      "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/taxonomy_term/countries"
+      DEV_CMS + CMS_ID + "/taxonomy_term/countries"
     );
     console.log("Countries Fetched Successfully");
     return countryIDS;
@@ -111,7 +111,7 @@ const getCountries = async (instance) => {
 const getCategory = async (instance) => {
   try {
     let categoryIDS = await instance.get(
-      "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/taxonomy_term/category"
+      DEV_CMS + CMS_ID + "/taxonomy_term/category"
     );
     console.log("Categories Fetched Successfully");
     return categoryIDS;
@@ -124,7 +124,7 @@ const getCategory = async (instance) => {
 const createCMS = async (createTemplate, messageID, instance) => {
   try {
     let res = await instance.post(
-      "http://devcms.ayoba.me/jsonapi/15c1ad2ea0d3/node/microapp",
+      DEV_CMS + CMS_ID + "/node/microapp",
       createTemplate,
       {
         auth: credentials,
@@ -151,6 +151,5 @@ module.exports = {
   getLanguages,
   getCountries,
   getCategory,
-  createCMS,
-  credentials
+  createCMS
 };
