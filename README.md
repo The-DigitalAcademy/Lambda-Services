@@ -16,6 +16,16 @@ Project developed to automate the procedures required to create a MicroApp on th
 4. Create MA
 5. Update Strapi
 
+## Overview
+
+### High-Level
+
+![create-dev-cms drawio](https://github.com/The-DigitalAcademy/Lambda-Services/assets/65924485/0ac15ac4-e32c-4ccd-a09d-e081d99e1a91)
+
+### Low-Level
+
+![create-dev-cms-architecture drawio](https://github.com/The-DigitalAcademy/Lambda-Services/assets/65924485/e3518590-392b-45c9-afa2-daeee4f68ccb)
+
 ## Configurations
 
 1. Server Port - 3030
