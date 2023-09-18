@@ -1018,7 +1018,7 @@ Update Template with the MicroApp Request Data.
 }
 ```
 
-## Run Locally
+### Run Locally
 
 1. Build Docker Image\
   ```docker build -t lambda .```
