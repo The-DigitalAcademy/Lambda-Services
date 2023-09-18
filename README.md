@@ -88,7 +88,7 @@ CMS Username and Password used to log into [DevCMS](http://devcms.ayoba.me/eng/a
 ##### .env
 
 CMS_USERNAME="enter username"
-CMS_PASSWORD="eneter password"
+CMS_PASSWORD="enter password"
 
 #### Server Requests
 
@@ -1018,12 +1018,20 @@ Update Template with the MicroApp Request Data.
 }
 ```
 
+## Run Locally
+
+1. Build Docker Image\
+  ```docker build -t lambda .```
+
+2. Run Docker Image\
+  ```docker run -p 3030:3030 lambda```
+
 ### Dev-Strapi
 
-##### Update Dev-Strapi
+##### Update Strapi Collections
 
-Message Queue:
+Message Queue:\
     1. [voc-automation-messagelog](https://devstrapi.thedigitalacademy.co.za/admin/content-manager/collectionType/api::voc-automation-messagelog.voc-automation-messagelog?page=1&pageSize=10&sort=messageID:ASC)
 
-On Success:
+On Success:\
     2. [publish-micro-app](https://devstrapi.thedigitalacademy.co.za/admin/content-manager/collectionType/api::publish-micro-app.publish-micro-app?page=1&pageSize=10&sort=microAppId:ASC)
