@@ -1,41 +1,26 @@
-async function sendEmail(event) {
-  const nodemailer = require("nodemailer");
-  const smtpTransport = require("nodemailer-smtp-transport");
+const {createMicroAppMailTemplate} = require("../data/templates")
+const axios = require("axios")
+require("dotenv").config();
 
-  const transporter = nodemailer.createTransport(
-    smtpTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.sesAccessKey,
-        pass: process.env.sesSecretKey,
-      },
-    })
-  );
+const STRAPI_URL = process.env.STRAPI_URL ?? "https://devstrapi.thedigitalacademy.co.za"
+const SENDER_ADDRESS = process.env.SENDER_ADDRESS ?? "ayobasupport@thedigitalacademy.co.za"
+const REPLY_TO = process.env.REPLY_TO ?? "no-reply@thedigitalacademy.co.za"
+const CC_ADDRESS = process.env.CC_ADDRESS ?? "developersupport@ayoba.me"
 
-  const text = JSON.stringify(event.Records[0]);
-
+async function sendMail(body) {
+  createMicroAppMailTemplate.microAppName = body.Body.data.title
   const mailOptions = {
-    from: "delali@thedigitalacademy.co.za",
-    to: "dfunani@gmail.com",
-    bcc: "delali@thedigitalacademy.co.za",
-    subject: "Test subject",
-    text: text,
+    from: SENDER_ADDRESS,
+    replyTo: REPLY_TO,
+    cc: CC_ADDRESS,
+    to: body.Body.data.user_email,
+    subject: `Automated: MicroApp ${createMicroAppMailTemplate.microAppName} is now ready for Testing`,
+    ...createMicroAppMailTemplate.returnHTML(),
   };
-  console.log(process.env.sesAccessKey);
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      const response = {
-        statusCode: 500,
-        body: JSON.stringify({
-          error: error.message,
-        }),
-      };
-    }
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify({
-        message: text,
-      }),
-    };
-  });
+  const mail = await axios.post(STRAPI_URL + "/api/email/", mailOptions)
+  if (mail.data) console.log("Outgoing email successful")
+  else console.log("Outgoing email failed")
 }
+
+
+module.exports = {sendMail}

@@ -3,7 +3,7 @@ FROM node:16
 # Create app directory
 WORKDIR /Lambda Services
 
-ENV STRAPI_URL=https://devstrapi.thedigitalacademy.co.za
+ENV STRAPI_URL=https://devportaladmin.thedigitalacademy.co.za/
 ENV DEV_CMS=http://devcms.ayoba.me
 ENV PROD_CMS=http://devcms.ayoba.me
 ENV CMS_ID=/jsonapi/15c1ad2ea0d3
