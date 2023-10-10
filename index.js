@@ -2,7 +2,8 @@ const bodyParser = require("body-parser");
 const express = require("express");
 require("dotenv").config();
 const path = require("path");
-const {processRequests} = require("./services/server/process-main.js")
+const {processRequests} = require("./services/server/process-main.js");
+const { sendMail } = require("./services/gmail.js");
 
 
 // Instance of an express Node Server
@@ -17,6 +18,7 @@ server.get("/", (req, res) => {
 // Creates A REST API Endpoint
 server.post("/", bodyParser.json(), async (req, res) => {
   console.log("Node Server Processing Request...")
+  // sendMail(req.body.Records[0].body)
   const response = await processRequests(req.body, req.headers)
   res.status(response.status).json(response.data)
 });
