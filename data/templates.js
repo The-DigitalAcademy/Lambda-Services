@@ -43,7 +43,7 @@ const createTemplate = {
       field_contains_purchases: false,
       field_enable_disclaimer: true,
       field_domains: [],
-      field_use_proxy: true,
+      field_use_proxy: false,
     },
     relationships: {
       field_languages_term: {
