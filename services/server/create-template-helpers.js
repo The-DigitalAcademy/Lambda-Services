@@ -58,31 +58,37 @@ const setCategories = (body, categoryIDS) => {
 };
 
 const setCountries = (body, countryIDS) => {
-  return countryIDS.data.data
+  const countries = countryIDS.data.data
     .filter((country) =>
-      body.Body.data.momo
-        ? Object.keys(body.Body.data.MomoCountries)
-            .sort()
-            .filter((e, i) => i === 0)
-            .map((country, index) =>
-              country === "congobrazzaville"
-                ? "Congo (Brazzaville)"
-                : country.slice(0, 1).toUpperCase() + country.slice(1)
-            )
-            .includes(country.attributes.name.split(" ").join(""))
-        : body.Body.data.countries
-            .map((countryName) =>
-              JSON.parse(countryName.name.split(" ").join(""))
-            )
-            .flat()
-            .includes(country.attributes.name.split(" ").join(""))
+      body.Body.data.countries
+        .map((countryName) => JSON.parse(countryName.name.split(" ").join("")))
+        .flat()
+        .includes(country.attributes.name.split(" ").join(""))
     )
     .map((country) => {
       return { type: country.type, id: country.id };
     });
+  const momoCountries = [];
+  try {
+    momoCountries = countryIDS.data.data.filter((country) =>
+      Object.keys(body.Body.data.MomoCountries)
+        ?.sort()
+        ?.map((country, index) =>
+          country === "congobrazzaville"
+            ? "Congo (Brazzaville)"
+            : country.slice(0, 1).toUpperCase() + country.slice(1)
+        )
+        ?.includes(country.attributes.name.split(" ").join(""))
+    );
+  } catch (e) {
+    console.log("" + e);
+  }
+  return [...countries, ...momoCountries];
 };
 
 const setMOMOPhone = (body) => {
+  // Current Cant load more than one momo country
+  try{
   return Object.keys(body.Body.data.MomoCountries)
     .sort()
     .map((country, index) => {
@@ -99,6 +105,9 @@ const setMOMOPhone = (body) => {
       Object.values(dict).every((currentValue) => Boolean(currentValue))
     )
     .filter((e, i) => i === 0);
+  }catch(e){
+    return []
+  }
 };
 
 module.exports = {
