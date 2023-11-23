@@ -1,11 +1,12 @@
 const axios = require("axios");
 require("dotenv").config();
-const {credentials} = require("./auth-config")
+const { credentials } = require("./auth-config");
 
-const STRAPI_URL = process.env.STRAPI_URL ?? "https://devstrapi.thedigitalacademy.co.za" // Defaults to DevStrapi
-const DEV_CMS = process.env.DEV_CMS ?? "http://devcms.ayoba.me" // Defaults to DEV CMS
-const PROD_CMS = process.env.PROD_CMS ?? "http://devcms.ayoba.me"
-const CMS_ID = process.env.CMS_ID ?? "/jsonapi/15c1ad2ea0d3"
+const STRAPI_URL =
+  process.env.STRAPI_URL ?? "https://devstrapi.thedigitalacademy.co.za"; // Defaults to DevStrapi
+const DEV_CMS = process.env.DEV_CMS ?? "http://devcms.ayoba.me"; // Defaults to DEV CMS
+const PROD_CMS = process.env.PROD_CMS ?? "http://devcms.ayoba.me";
+const CMS_ID = process.env.CMS_ID ?? "/jsonapi/15c1ad2ea0d3";
 
 const fetchIcon = async (body) => {
   try {
@@ -110,8 +111,26 @@ const getCountries = async (instance) => {
 
 const getCategory = async (instance) => {
   try {
-    let categoryIDS = await instance.get(
-      DEV_CMS + CMS_ID + "/taxonomy_term/category"
+    let url = DEV_CMS + CMS_ID + "/taxonomy_term/category";
+    let categoryIDS = await instance.get(url);
+    url = categoryIDS.data?.links?.next?.href;
+    while (url) {
+      let categories = await instance.get(url);
+      categoryIDS.data.data = [
+        ...categoryIDS.data?.data,
+        ...categories.data?.data,
+      ];
+      url = categories.data?.links?.next?.href;
+    }
+
+    categoryIDS.data.data = categoryIDS.data.data.filter(
+      (category) =>
+        category.attributes.drupal_internal__tid ===
+        Math.max(
+          ...categoryIDS.data.data
+            .filter((id) => id.attributes.name === category.attributes.name)
+            .map((cid) => cid.attributes.drupal_internal__tid)
+        )
     );
     console.log("Categories Fetched Successfully");
     return categoryIDS;
@@ -133,7 +152,11 @@ const createCMS = async (createTemplate, messageID, instance) => {
     console.log("Successfully Created Micro App - DevCMS");
     return {
       status: 201,
-      message: "Successfully Created MicroAppID: " + res.data.data.id + " ========= MessageId: " + messageID,
+      message:
+        "Successfully Created MicroAppID: " +
+        res.data.data.id +
+        " ========= MessageId: " +
+        messageID,
     };
   } catch (error) {
     console.log("Couldn't Create Micro App - DevCMS");
@@ -151,5 +174,5 @@ module.exports = {
   getLanguages,
   getCountries,
   getCategory,
-  createCMS
+  createCMS,
 };

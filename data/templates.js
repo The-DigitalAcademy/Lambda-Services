@@ -22,7 +22,7 @@ const createTemplate = {
     type: "node--microapp",
     attributes: {
       title: "",
-      body: {
+      body: { 
         value: "",
         summary: "",
       },

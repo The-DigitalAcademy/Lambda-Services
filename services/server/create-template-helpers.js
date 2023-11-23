@@ -68,7 +68,7 @@ const setCountries = (body, countryIDS) => {
     .map((country) => {
       return { type: country.type, id: country.id };
     });
-  const momoCountries = [];
+  let momoCountries = [];
   try {
     momoCountries = countryIDS.data.data.filter((country) =>
       Object.keys(body.Body.data.MomoCountries)
