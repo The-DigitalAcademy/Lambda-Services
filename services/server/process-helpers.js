@@ -97,6 +97,7 @@ const updateDev = async (microappID, data) => {
       }
     );
 
+    // Microapp Status
     const getReadyForTestingStatus = await axios.get(
       `${STRAPI_URL}/api/micro-app-statuses/?filters[status][$eq]=Ready for testing`,
       headers
