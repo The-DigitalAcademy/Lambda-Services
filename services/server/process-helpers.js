@@ -8,6 +8,7 @@ const {
   setMOMOPhone,
 } = require("./create-template-helpers");
 const { createTemplate } = require("../../data/templates");
+const currentDate = require("./current-date");
 
 const STRAPI_URL =
   process.env.STRAPI_URL ?? "https://devstrapi.thedigitalacademy.co.za"; // Defaults to DevStrapi
@@ -79,6 +80,9 @@ const updateQueue = async (body, status, error = "") => {
 const updateDev = async (microappID, data) => {
   try {
     console.log("Updating STRAPI...");
+    const headers = {
+      headers: { Authorization: `Bearer ${process.env.STRAPI_TOKEN}` },
+    };
     const microAppReqID = await axios.get(
       STRAPI_URL +
         "/api/publish-micro-apps?filters[microAppId][$eq]=" +
@@ -91,6 +95,27 @@ const updateDev = async (microappID, data) => {
           dev: data,
         },
       }
+    );
+
+    const getReadyForTestingStatus = await axios.get(
+      `${STRAPI_URL}/api/micro-app-statuses/?filters[status][$eq]=Ready for testing`,
+      headers
+    );
+    const microapp = await axios.get(
+      `${STRAPI_URL}/api/micro-apps/${microappID}/?populate[0]=status_lifecycle.micro_app_status`,
+      headers
+    );
+    const microappStatusLifeCycle = microapp.data.data.attributes.status_lifecycle;
+    microappStatusLifeCycle.push({
+      date: currentDate(),
+      micro_app_status: {
+        connect: [getReadyForTestingStatus.data.data[0].id],
+      },
+    });
+    await axios.put(
+      `${STRAPI_URL}/api/micro-apps/${microappID}`,
+      { data: { status_lifecycle: microappStatusLifeCycle } },
+      headers
     );
     console.log("Updated STRAPI Successfully");
   } catch (err) {
